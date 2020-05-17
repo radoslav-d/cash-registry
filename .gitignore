@@ -1,0 +1,7 @@
+# binaries
+/bin
+/obj
+
+# IDE related
+*.depend
+*.layout
