@@ -1,6 +1,7 @@
 # binaries
 /bin
 /obj
+.userdata
 
 # IDE related
 *.depend
