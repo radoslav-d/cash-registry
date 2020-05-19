@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include "users.h"
 
-#define TIMEOUT 60
+#define TIMEOUT 10
 
 typedef struct REGISTRY_CHANGE_ITEM
 {

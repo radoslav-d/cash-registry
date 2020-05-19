@@ -4,13 +4,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #define FILENAME ".userdata"
+#define MAX_USERNAME_LEN 50
 
 typedef struct
 {
     int id;
-    char name[50];
+    char name[MAX_USERNAME_LEN];
     double balance;
 } USER;
 

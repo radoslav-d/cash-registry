@@ -11,11 +11,11 @@ void register_new_user();
 void remove_user();
 void deposit();
 void withdraw();
-
+void cash_registry_action(char * action_name, void *(*runnable) (void *));
 
 double CASH_REGISTRY = 0;
-sem_t * MUTEX;
-sem_t * EMPTY_CASH_REGISTRY;
+sem_t MUTEX;
+sem_t EMPTY_CASH_REGISTRY;
 USER_LIST_ITEM * ROOT_USER_ITEM;
 
 int main()
@@ -62,8 +62,8 @@ int main()
 
 void init()
 {
-    sem_init(EMPTY_CASH_REGISTRY, 0, 0);
-    sem_init(MUTEX, 0, 1);
+    sem_init(&EMPTY_CASH_REGISTRY, 0, 0);
+    sem_init(&MUTEX, 0, 1);
     ROOT_USER_ITEM = load_users();
 }
 
@@ -88,43 +88,21 @@ void remove_user()
 
 void deposit()
 {
-    char name[50];
-    printf("Enter you name: ");
-    scanf("%s", name);
-
-    REGISTRY_CHANGE_ITEM change_item;
-
-    USER * user_ptr = get_user_by_name(ROOT_USER_ITEM, name);
-    if (user_ptr == NULL)
-    {
-        printf("No user with such name!\n");
-        return;
-    }
-    change_item.user = user_ptr;
-    change_item.cash_registry = &CASH_REGISTRY;
-    change_item.mutex = MUTEX;
-    change_item.empty_registry = EMPTY_CASH_REGISTRY;
-    printf("Enter how much you want to deposit: ");
-    double amount;
-    scanf("%lf", &amount);
-
-    // abs
-    amount = amount >= 0 ? amount : amount * -1;
-
-    change_item.change_amount = amount;
-
-    pthread_t thread;
-    pthread_create(&thread, NULL, deposit_runnable,(void*) &change_item);
+    cash_registry_action("deposit", deposit_runnable);
 }
-
 
 void withdraw()
 {
-    char name[50];
+    cash_registry_action("withdraw", withdraw_runnable);
+}
+
+void cash_registry_action(char * action_name, void *(*runnable) (void *))
+{
+    char name[MAX_USERNAME_LEN];
     printf("Enter you name: ");
     scanf("%s", name);
 
-    REGISTRY_CHANGE_ITEM change_item;
+    REGISTRY_CHANGE_ITEM * change_item = (REGISTRY_CHANGE_ITEM *) malloc(sizeof(REGISTRY_CHANGE_ITEM));
 
     USER * user_ptr = get_user_by_name(ROOT_USER_ITEM, name);
     if (user_ptr == NULL)
@@ -132,19 +110,19 @@ void withdraw()
         printf("No user with such name!\n");
         return;
     }
-    change_item.user = user_ptr;
-    change_item.cash_registry = &CASH_REGISTRY;
-    change_item.mutex = MUTEX;
-    change_item.empty_registry = EMPTY_CASH_REGISTRY;
-    printf("Enter how much you want to withdraw: ");
+    change_item->user = user_ptr;
+    change_item->cash_registry = &CASH_REGISTRY;
+    change_item->mutex = &MUTEX;
+    change_item->empty_registry = &EMPTY_CASH_REGISTRY;
+    printf("Enter how much you want to %s: ", action_name);
     double amount;
     scanf("%lf", &amount);
 
     // abs
     amount = amount >= 0 ? amount : amount * -1;
 
-    change_item.change_amount = amount;
+    change_item->change_amount = amount;
 
-    pthread_t * thread;
-    pthread_create(thread, NULL, withdraw_runnable,(void*) &change_item);
+    pthread_t thread;
+    pthread_create(&thread, NULL, runnable,(void*) change_item);
 }
